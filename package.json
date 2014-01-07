@@ -1,0 +1,28 @@
+{
+  "name": "html2bemjson",
+  "version": "0.0.0",
+  "description": "HTML to BEMJSON convertor",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tadatuta/html2bemjson"
+  },
+  "keywords": [
+    "bem",
+    "bemjson",
+    "html",
+    "html2bemjson",
+    "convertor"
+  ],
+  "author": "Vladimir Grinenko",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tadatuta/html2bemjson/issues"
+  },
+  "dependencies": {
+    "htmlparser2": "3.4.0"
+  }
+}

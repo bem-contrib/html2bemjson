@@ -1,4 +1,5 @@
-var htmlparser = require('htmlparser2');
+var htmlparser = require('htmlparser2'),
+    vm = require('vm');
 
 function isEmpty(obj) {
     for(var key in obj) {
@@ -79,8 +80,43 @@ var convert = function(html) {
                 buf.mix = classes.map(parseBemEntity);
             }
 
-            buf.tag = tag;
             delete attrs.class;
+
+            var js = attrs['data-bem'] || attrs.onclick;
+
+            if (js) {
+                js = js.replace(/&quot;/g, '\'');
+                js = js.replace(/^return/, '');
+                js = vm.runInNewContext('(' + js + ')');
+
+                if (js[block.block]) {
+                    if (isEmpty(js[block.block])) {
+                        buf.js = true;
+                    } else {
+                        buf.js = js[block.block];
+                    }
+                }
+                delete js[block.block];
+
+                Object.keys(js).forEach(function(prop) {
+                    buf.mix.forEach(function(entity, idx) {
+                        if (entity.block && entity.block == prop) {
+                            if (isEmpty(js[prop])) {
+                                buf.mix[idx].js = true;
+                            } else {
+                                buf.mix[idx].js = js[prop];
+                            }
+                        }
+                    });
+                });
+
+                delete attrs['data-bem'];
+                delete attrs.onclick;
+            }
+
+            if (tag != 'div') {
+                buf.tag = tag;
+            }
 
             if (!isEmpty(attrs)) buf.attrs = attrs;
 
@@ -98,8 +134,9 @@ var convert = function(html) {
             last.content.push(buf);
         },
         ontext: function(text) {
-            var last = bufArray.last();
+            if (text.match(/(^\n|^\n\s+$)/g)) return;
 
+            var last = bufArray.last();
             if (!last) return;
 
             last.content = last.content || [];

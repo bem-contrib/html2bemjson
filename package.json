@@ -1,6 +1,6 @@
 {
   "name": "html2bemjson",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "HTML to BEMJSON convertor",
   "main": "index.js",
   "scripts": {
@@ -23,6 +23,7 @@
     "url": "https://github.com/tadatuta/html2bemjson/issues"
   },
   "dependencies": {
-    "htmlparser2": "3.4.0"
+    "bem-naming": "^0.3.0",
+    "htmlparser2": "3.7.3"
   }
 }

@@ -32,7 +32,14 @@ var convert = function(html) {
             }
 
             if (classes && classes.length) {
-                buf.mix = classes.map(bemNaming.parse);
+                classes.map(bemNaming.parse).forEach(function(entity) {
+                    if (entity.block === buf.block && entity.modName) {
+                        buf.mods || (buf.mods = {});
+                        buf.mods[entity.modName] = entity.modVal;
+                    } else {
+                        buf.mix = (buf.mix || []).concat(entity);
+                    }
+                });
             }
 
             delete attrs.class;

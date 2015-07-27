@@ -3,12 +3,21 @@ var inspect = require('util').inspect,
     fs = require('fs'),
     path = require('path'),
     html2bemjson = require('..'),
-    testsNumber = 3;
+    testsNumber = 4;
 
 while (testsNumber) {
     var html = fs.readFileSync(path.resolve(__dirname, './test' + testsNumber + '.html')),
         reference = require('./reference' + testsNumber + '.bemjson.js'),
-        result = html2bemjson.convert(html);
+        opts = {};
+
+    if (testsNumber === 4) {
+        opts.naming = {
+            elem: '__',
+            mod: '--'
+        }
+    }
+
+    var result = html2bemjson.convert(html, opts);
 
     try {
         assert.deepEqual(result, reference, 'Test #' + testsNumber + ' failed');

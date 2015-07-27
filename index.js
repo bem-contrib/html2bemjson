@@ -12,8 +12,11 @@ function isEmpty(obj) {
     return true;
 }
 
-var convert = function(html) {
-    var bufArray = [],
+var convert = function(html, opts) {
+    opts || (opts = {});
+
+    var naming = bemNaming(opts.naming),
+        bufArray = [],
         results = {};
 
     bufArray.last = function() {
@@ -24,7 +27,7 @@ var convert = function(html) {
         onopentag: function(tag, attrs) {
             var buf = {},
                 classes = attrs.class && attrs.class.split(' '),
-                block = classes && bemNaming.parse(classes.shift()),
+                block = classes && naming.parse(classes.shift()),
                 i;
 
             for (i in block) {
@@ -32,7 +35,7 @@ var convert = function(html) {
             }
 
             if (classes && classes.length) {
-                classes.map(bemNaming.parse).forEach(function(entity) {
+                classes.map(naming.parse, naming).forEach(function(entity) {
                     if (entity.block === buf.block && entity.modName) {
                         buf.mods || (buf.mods = {});
                         buf.mods[entity.modName] = entity.modVal;

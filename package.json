@@ -23,7 +23,7 @@
     "url": "https://github.com/bem-incubator/html2bemjsonissues"
   },
   "dependencies": {
-    "bem-naming": "^0.3.0",
+    "bem-naming": "^0.5.1",
     "htmlparser2": "3.7.3"
   }
 }

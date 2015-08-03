@@ -1,5 +1,6 @@
 var htmlparser = require('htmlparser2'),
     bemNaming = require('bem-naming'),
+    stringifyObj = require('stringify-object'),
     vm = require('vm');
 
 function isEmpty(obj) {
@@ -142,4 +143,17 @@ var convert = function(html, opts) {
     return results;
 };
 
-exports.convert = convert;
+function stringify(html, opts) {
+    opts || (opts = {});
+    opts.indent || (opts.indent = '    ');
+
+    return stringifyObj(convert(html, opts), opts);
+};
+
+
+module.exports = {
+    convert: convert,
+    stringify: stringify
+};
+
+console.log(stringify('<div class="b1"><div class="b1__elem1"></div></div>'));

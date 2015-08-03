@@ -18,7 +18,7 @@ var convert = function(html, opts) {
 
     var naming = bemNaming(opts.naming),
         bufArray = [],
-        results = {};
+        results = [];
 
     bufArray.last = function() {
         return this[this.length - 1];
@@ -37,9 +37,15 @@ var convert = function(html, opts) {
 
             if (classes && classes.length) {
                 classes.map(naming.parse, naming).forEach(function(entity) {
-                    if (entity.block === buf.block && entity.modName && !entity.elem) {
-                        buf.mods || (buf.mods = {});
-                        buf.mods[entity.modName] = entity.modVal;
+                    var modFieldName = entity.elem ? 'elemMods' : 'mods';
+
+                    if (
+                        entity.block === buf.block &&
+                        entity.elem === buf.elem &&
+                        entity.modName
+                    ) {
+                        buf[modFieldName] || (buf[modFieldName] = {});
+                        buf[modFieldName][entity.modName] = entity.modVal;
                     } else { // build mixes
                         if (entity.modName) {
                             var mixes = buf.mix,
@@ -52,8 +58,6 @@ var convert = function(html, opts) {
                                     }
                                 }
                             }
-
-                            var modFieldName = entity.elem ? 'elemMods' : 'mods';
 
                             if (currentMixingItem) {
                                 currentMixingItem[modFieldName] || (currentMixingItem[modFieldName] = {});
@@ -113,13 +117,19 @@ var convert = function(html, opts) {
 
             if (!isEmpty(attrs)) buf.attrs = attrs;
 
+            if (isEmpty(buf)) buf = { content: '' };
+
             bufArray.push(buf);
         },
         onclosetag: function(tag) {
             var buf = bufArray.pop();
+
             if (bufArray.length === 0) {
-                return results = buf;
+                results.push(buf);
+
+                return;
             }
+
             var last = bufArray.last();
             if (!(last.content instanceof Array)) {
                 last.content = [];
@@ -132,7 +142,7 @@ var convert = function(html, opts) {
             var last = bufArray.last();
             if (!last) return;
 
-            last.content = last.content || [];
+            last.content || (last.content = []);
             last.content.push(text);
         }
     });
@@ -140,7 +150,7 @@ var convert = function(html, opts) {
     parser.write(html);
     parser.end();
 
-    return results;
+    return results.length === 1 ? results[0] : results;
 };
 
 function stringify(html, opts) {
@@ -155,5 +165,3 @@ module.exports = {
     convert: convert,
     stringify: stringify
 };
-
-console.log(stringify('<div class="b1"><div class="b1__elem1"></div></div>'));

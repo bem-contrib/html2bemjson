@@ -36,10 +36,37 @@ var convert = function(html, opts) {
 
             if (classes && classes.length) {
                 classes.map(naming.parse, naming).forEach(function(entity) {
-                    if (entity.block === buf.block && entity.modName) {
+                    if (entity.block === buf.block && entity.modName && !entity.elem) {
                         buf.mods || (buf.mods = {});
                         buf.mods[entity.modName] = entity.modVal;
-                    } else {
+                    } else { // build mixes
+                        if (entity.modName) {
+                            var mixes = buf.mix,
+                                currentMixingItem;
+
+                            if (mixes) {
+                                for (var i = 0; i < buf.mix.length; i++) {
+                                    if ((mixes[i].block === entity.block) && mixes[i].elem === entity.elem) {
+                                        currentMixingItem = mixes[i];
+                                    }
+                                }
+                            }
+
+                            var modFieldName = entity.elem ? 'elemMods' : 'mods';
+
+                            if (currentMixingItem) {
+                                currentMixingItem[modFieldName] || (currentMixingItem[modFieldName] = {});
+                                currentMixingItem[modFieldName][entity.modName] = entity.modVal;
+
+                                return;
+                            } else {
+                                entity[modFieldName] = {};
+                                entity[modFieldName][entity.modName] = entity.modVal;
+                                delete entity.modName;
+                                delete entity.modVal;
+                            }
+                        }
+
                         buf.mix = (buf.mix || []).concat(entity);
                     }
                 });

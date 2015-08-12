@@ -3,7 +3,7 @@ var inspect = require('util').inspect,
     fs = require('fs'),
     path = require('path'),
     html2bemjson = require('..'),
-    testsNumber = 10;
+    testsNumber = 12;
 
 while (testsNumber) {
     var html = fs.readFileSync(path.resolve(__dirname, './test' + testsNumber + '.html')),

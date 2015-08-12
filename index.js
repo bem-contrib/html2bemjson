@@ -16,6 +16,7 @@ function isEmpty(obj) {
 var convert = function(html, opts) {
     opts || (opts = {});
     typeof opts.preserveComments === 'undefined' && (opts.preserveComments = true);
+    typeof opts.preserveWrongClasses === 'undefined' && (opts.preserveWrongClasses = true);
 
     var naming = bemNaming(opts.naming),
         bufArray = [],
@@ -46,16 +47,45 @@ var convert = function(html, opts) {
         onopentag: function(tag, attrs) {
             var buf = {},
                 classes = attrs.class && attrs.class.split(' '),
-                block = classes && naming.parse(classes.shift()),
-                i;
-
-            for (i in block) {
-                buf[i] = block[i];
-            }
+                block;
 
             if (classes && classes.length) {
-                classes.map(naming.parse, naming).forEach(function(entity) {
-                    var modFieldName = entity.elem ? 'elemMods' : 'mods';
+                var entities = classes.map(function(cls, idx) {
+                        var entity = naming.parse(cls);
+
+                        if (!entity && opts.preserveWrongClasses) {
+                            return cls;
+                        }
+
+                        return entity;
+                    }),
+                    visitedBlocksOnCurrentNode = [];
+
+                function onEntity(entity) {
+                    if (typeof entity === 'string') {
+                        return buf.cls ? buf.cls.push(entity) : buf.cls = [entity];
+                    }
+
+                    var blockName = entity.block,
+                        modFieldName = entity.elem ? 'elemMods' : 'mods';
+
+                    if (naming.isBlock(entity)) {
+                        visitedBlocksOnCurrentNode.push(blockName);
+
+                        if (visitedBlocksOnCurrentNode.length === 1) {
+                            block = entity;
+
+                            for (var i in block) {
+                                buf[i] = block[i];
+                            }
+
+                            return;
+                        }
+                    }
+
+                    if (naming.isBlockMod(entity) && visitedBlocksOnCurrentNode.indexOf(blockName) < 0) {
+                        onEntity({ block: blockName });
+                    }
 
                     if (
                         entity.block === buf.block &&
@@ -92,7 +122,19 @@ var convert = function(html, opts) {
 
                         buf.mix = (buf.mix || []).concat(entity);
                     }
-                });
+                }
+
+                entities.forEach(onEntity);
+
+                if (!buf.block && buf.mix.length) {
+
+                    var mainEntity = buf.mix.shift();
+                    if (!buf.mix.length) delete buf.mix;
+
+                    for (var i in mainEntity) {
+                        buf[i] = mainEntity[i];
+                    }
+                }
             }
 
             delete attrs.class;

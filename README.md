@@ -29,7 +29,8 @@ html2bemjson.stringify(html);
 ### Options
 Both methods can take options object as a second argument:
 ```js
-require('html2bemjson').convert('<div class="b1 b1--mod">', {
+require('html2bemjson').stringify('<div class="b1 b1--mod">', {
+    preserveComments: false,
     naming: { elem: '__', mod: '--' }, // refer to https://en.bem.info/tools/bem/bem-naming/ for details
     indent: '\t'
 });

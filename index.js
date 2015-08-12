@@ -15,6 +15,7 @@ function isEmpty(obj) {
 
 var convert = function(html, opts) {
     opts || (opts = {});
+    typeof opts.preserveComments === 'undefined' && (opts.preserveComments = true);
 
     var naming = bemNaming(opts.naming),
         bufArray = [],
@@ -25,6 +26,23 @@ var convert = function(html, opts) {
     };
 
     var parser = new htmlparser.Parser({
+        onprocessinginstruction: function(name, data) {
+            name === '!doctype' && results.push('<' + data + '>');
+        },
+        oncomment: function(data) {
+            if (opts.preserveComments === false) return;
+
+            var comment = '<!-- ' + data.trim() + '-->',
+                last = bufArray.last();
+
+            if (!last) {
+                results.push(comment);
+                return;
+            }
+
+            last.content || (last.content = []);
+            last.content.push(comment);
+        },
         onopentag: function(tag, attrs) {
             var buf = {},
                 classes = attrs.class && attrs.class.split(' '),
@@ -137,10 +155,15 @@ var convert = function(html, opts) {
             last.content.push(buf);
         },
         ontext: function(text) {
-            if (text.match(/(^\n|^\n\s+$)/g)) return;
+            if (text.match(/(^[\s\n]+$)/g)) return;
+
+            text = text.trim();
 
             var last = bufArray.last();
-            if (!last) return;
+            if (!last) {
+                results.push(text);
+                return;
+            }
 
             last.content || (last.content = []);
             last.content.push(text);
@@ -159,7 +182,6 @@ function stringify(html, opts) {
 
     return stringifyObj(convert(html, opts), opts);
 };
-
 
 module.exports = {
     convert: convert,

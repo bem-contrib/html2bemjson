@@ -3,7 +3,7 @@ var inspect = require('util').inspect,
     fs = require('fs'),
     path = require('path'),
     html2bemjson = require('..'),
-    testsNumber = 6;
+    testsNumber = 10;
 
 while (testsNumber) {
     var html = fs.readFileSync(path.resolve(__dirname, './test' + testsNumber + '.html')),
@@ -23,7 +23,7 @@ while (testsNumber) {
         assert.deepEqual(result, reference, 'Test #' + testsNumber + ' failed');
     } catch(err) {
         console.log(err.message);
-        console.log('\nconverted BEMJSON\n', inspect(result, { depth: null }));
+        console.log('\nconverted BEMJSON\n', html2bemjson.stringify(html, opts));
         console.log('\nreference\n', inspect(reference, { depth: null }));
         throw new Error(err);
     }

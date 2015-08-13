@@ -15,7 +15,7 @@ module.exports = [
                     {
                         tag: 'title',
                         content: [
-                            'заголовок'
+                            'title'
                         ]
                     }
                 ]
@@ -23,21 +23,21 @@ module.exports = [
             {
                 tag: 'body',
                 content: [
-                    'some text\nsome other text',
+                    ' some text\nsome other text ',
                     {
                         content: [
-                            'text',
+                            ' text ',
                             {
                                 tag: 'b',
                                 content: [
                                     'strong text'
                                 ]
                             },
-                            'more text\n    text more text',
+                            ' more text\n text more text',
                             {
                                 tag: 'br'
                             },
-                            'text more text'
+                            ' text more text '
                         ]
                     }
                 ]

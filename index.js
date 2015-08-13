@@ -33,7 +33,7 @@ var convert = function(html, opts) {
         oncomment: function(data) {
             if (opts.preserveComments === false) return;
 
-            var comment = '<!-- ' + data.trim() + '-->',
+            var comment = '<!-- ' + data.trim() + ' -->',
                 last = bufArray.last();
 
             if (!last) {
@@ -199,9 +199,16 @@ var convert = function(html, opts) {
         ontext: function(text) {
             if (text.match(/(^[\s\n]+$)/g)) return;
 
-            text = text.trim();
-
             var last = bufArray.last();
+
+            if (!last || !last.tag || last.tag !== 'pre') {
+                text = text.replace(/^(\s*)(.*?)(\s*)$/gm, function(source, before, content, after) {
+                    before && (content = ' ' + content);
+                    after && (content = content + ' ');
+                    return content;
+                });
+            }
+
             if (!last) {
                 results.push(text);
                 return;

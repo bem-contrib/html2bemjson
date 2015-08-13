@@ -26,5 +26,8 @@
     "bem-naming": "^0.5.1",
     "htmlparser2": "3.7.3",
     "stringify-object": "^2.3.0"
+  },
+  "devDependencies": {
+    "glob": "^5.0.14"
   }
 }

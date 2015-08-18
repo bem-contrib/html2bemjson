@@ -17,6 +17,7 @@ var convert = function(html, opts) {
     opts || (opts = {});
     typeof opts.preserveComments === 'undefined' && (opts.preserveComments = true);
     typeof opts.preserveWrongClasses === 'undefined' && (opts.preserveWrongClasses = true);
+    typeof opts.preserveTags === 'undefined' && (opts.preserveTags = true);
 
     var naming = bemNaming(opts.naming),
         bufArray = [],
@@ -45,9 +46,8 @@ var convert = function(html, opts) {
             last.content.push(comment);
         },
         onopentag: function(tag, attrs) {
-            var buf = {},
-                classes = attrs.class && attrs.class.split(' '),
-                block;
+            var bemjsonNode = {},
+                classes = attrs.class && attrs.class.split(' ');
 
             if (classes && classes.length) {
                 var entities = classes.map(function(cls, idx) {
@@ -63,44 +63,39 @@ var convert = function(html, opts) {
 
                 function onEntity(entity) {
                     if (typeof entity === 'string') {
-                        return buf.cls ? buf.cls.push(entity) : buf.cls = [entity];
+                        return bemjsonNode.cls ? bemjsonNode.cls.push(entity) : bemjsonNode.cls = [entity];
                     }
 
                     var blockName = entity.block,
                         modFieldName = entity.elem ? 'elemMods' : 'mods';
 
-                    if (naming.isBlock(entity)) {
-                        visitedBlocksOnCurrentNode.push(blockName);
-
-                        if (visitedBlocksOnCurrentNode.length === 1) {
-                            block = entity;
-
-                            for (var i in block) {
-                                buf[i] = block[i];
-                            }
-
-                            return;
-                        }
-                    }
+                    naming.isBlock(entity) && visitedBlocksOnCurrentNode.push(blockName);
 
                     if (naming.isBlockMod(entity) && visitedBlocksOnCurrentNode.indexOf(blockName) < 0) {
                         onEntity({ block: blockName });
                     }
 
+                    if (!bemjsonNode.block) {
+                        for (var i in entity) {
+                            bemjsonNode[i] = entity[i];
+                        }
+                        return;
+                    }
+
                     if (
-                        entity.block === buf.block &&
-                        entity.elem === buf.elem &&
+                        entity.block === bemjsonNode.block &&
+                        entity.elem === bemjsonNode.elem &&
                         entity.modName
                     ) {
-                        buf[modFieldName] || (buf[modFieldName] = {});
-                        buf[modFieldName][entity.modName] = entity.modVal;
+                        bemjsonNode[modFieldName] || (bemjsonNode[modFieldName] = {});
+                        bemjsonNode[modFieldName][entity.modName] = entity.modVal;
                     } else { // build mixes
                         if (entity.modName) {
-                            var mixes = buf.mix,
+                            var mixes = bemjsonNode.mix,
                                 currentMixingItem;
 
                             if (mixes) {
-                                for (var i = 0; i < buf.mix.length; i++) {
+                                for (var i = 0; i < bemjsonNode.mix.length; i++) {
                                     if ((mixes[i].block === entity.block) && mixes[i].elem === entity.elem) {
                                         currentMixingItem = mixes[i];
                                     }
@@ -120,19 +115,19 @@ var convert = function(html, opts) {
                             }
                         }
 
-                        buf.mix = (buf.mix || []).concat(entity);
+                        bemjsonNode.mix = (bemjsonNode.mix || []).concat(entity);
                     }
                 }
 
                 entities.forEach(onEntity);
 
-                if (!buf.block && buf.mix.length) {
+                if (!bemjsonNode.block && bemjsonNode.mix.length) {
 
-                    var mainEntity = buf.mix.shift();
-                    if (!buf.mix.length) delete buf.mix;
+                    var mainEntity = bemjsonNode.mix.shift();
+                    if (!bemjsonNode.mix.length) delete bemjsonNode.mix;
 
                     for (var i in mainEntity) {
-                        buf[i] = mainEntity[i];
+                        bemjsonNode[i] = mainEntity[i];
                     }
                 }
             }
@@ -146,22 +141,22 @@ var convert = function(html, opts) {
                 js = js.replace(/^return/, '');
                 js = vm.runInNewContext('(' + js + ')');
 
-                if (js[block.block]) {
-                    if (isEmpty(js[block.block])) {
-                        buf.js = true;
+                if (js[bemjsonNode.block]) {
+                    if (isEmpty(js[bemjsonNode.block])) {
+                        bemjsonNode.js = true;
                     } else {
-                        buf.js = js[block.block];
+                        bemjsonNode.js = js[bemjsonNode.block];
                     }
                 }
-                delete js[block.block];
+                delete js[bemjsonNode.block];
 
                 Object.keys(js).forEach(function(prop) {
-                    buf.mix.forEach(function(entity, idx) {
+                    bemjsonNode.mix.forEach(function(entity, idx) {
                         if (entity.block && entity.block == prop) {
                             if (isEmpty(js[prop])) {
-                                buf.mix[idx].js = true;
+                                bemjsonNode.mix[idx].js = true;
                             } else {
-                                buf.mix[idx].js = js[prop];
+                                bemjsonNode.mix[idx].js = js[prop];
                             }
                         }
                     });
@@ -171,21 +166,25 @@ var convert = function(html, opts) {
                 delete attrs.onclick;
             }
 
-            if (tag != 'div') {
-                buf.tag = tag;
+            if (tag !== 'div' && (opts.preserveTags === true || !bemjsonNode.block)) {
+                bemjsonNode.tag = tag;
             }
 
-            if (!isEmpty(attrs)) buf.attrs = attrs;
+            if (!isEmpty(attrs)) bemjsonNode.attrs = attrs;
 
-            if (isEmpty(buf)) buf = { content: '' };
+            if (isEmpty(bemjsonNode)) bemjsonNode = { content: '' };
 
-            bufArray.push(buf);
+            if (bemjsonNode.elem && bufArray.last() && bufArray.last().block === bemjsonNode.block) {
+                delete bemjsonNode.block;
+            }
+
+            bufArray.push(bemjsonNode);
         },
         onclosetag: function(tag) {
-            var buf = bufArray.pop();
+            var bemjsonNode = bufArray.pop();
 
             if (bufArray.length === 0) {
-                results.push(buf);
+                results.push(bemjsonNode);
 
                 return;
             }
@@ -194,7 +193,7 @@ var convert = function(html, opts) {
             if (!(last.content instanceof Array)) {
                 last.content = [];
             }
-            last.content.push(buf);
+            last.content.push(bemjsonNode);
         },
         ontext: function(text) {
             if (text.match(/(^[\s\n]+$)/g)) return;

@@ -1,10 +1,10 @@
 module.exports = [
     {
         block: 'b1',
-        mix: [{
+        mix: {
             block: 'b2',
             mods: { m1: 'v1', m2: true }
-        }]
+        }
     },
     {
         block: 'b1',

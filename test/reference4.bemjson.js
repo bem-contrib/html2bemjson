@@ -6,7 +6,7 @@ module.exports = {
         },
         {
             block: 'b1',
-            mix: [{ block: 'b1', elem: 'e1', elemMods: { v1: true } }]
+            mix: { block: 'b1', elem: 'e1', elemMods: { v1: true } }
         },
         { block: 'b1', mods: { 'bool-mod': true } }
     ]

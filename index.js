@@ -121,7 +121,7 @@ var convert = function(html, opts) {
 
                 entities.forEach(onEntity);
 
-                if (!bemjsonNode.block && bemjsonNode.mix.length) {
+                if (!bemjsonNode.block && bemjsonNode.mix && bemjsonNode.mix.length) {
 
                     var mainEntity = bemjsonNode.mix.shift();
                     if (!bemjsonNode.mix.length) delete bemjsonNode.mix;
@@ -187,7 +187,9 @@ var convert = function(html, opts) {
                 if (Array.isArray(bemjsonNode[field]) && bemjsonNode[field].length === 1) {
                     bemjsonNode[field] = bemjsonNode[field][0];
                 }
-            })
+            });
+
+            bemjsonNode.cls && Array.isArray(bemjsonNode.cls) && (bemjsonNode.cls = bemjsonNode.cls.join(' '))
 
             if (bufArray.length === 0) {
                 results.push(bemjsonNode);

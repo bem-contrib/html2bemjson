@@ -14,9 +14,7 @@ module.exports = [
                     },
                     {
                         tag: 'title',
-                        content: [
-                            'title'
-                        ]
+                        content: 'title'
                     }
                 ]
             },
@@ -29,9 +27,7 @@ module.exports = [
                             ' text ',
                             {
                                 tag: 'b',
-                                content: [
-                                    'strong text'
-                                ]
+                                content: 'strong text'
                             },
                             ' more text\n text more text',
                             {

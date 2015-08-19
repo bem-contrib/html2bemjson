@@ -183,6 +183,10 @@ var convert = function(html, opts) {
         onclosetag: function(tag) {
             var bemjsonNode = bufArray.pop();
 
+            if (Array.isArray(bemjsonNode.content) && bemjsonNode.content.length === 1) {
+                bemjsonNode.content = bemjsonNode.content[0];
+            }
+
             if (bufArray.length === 0) {
                 results.push(bemjsonNode);
 

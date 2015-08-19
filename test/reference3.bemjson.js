@@ -1,8 +1,8 @@
 module.exports = {
     block: 'b1',
     js: true,
-    content: [{
+    content: {
         block: 'b2',
         js: { a: 'b' }
-    }]
+    }
 }

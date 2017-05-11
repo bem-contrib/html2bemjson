@@ -47,7 +47,7 @@ var convert = function(html, opts) {
         },
         onopentag: function(tag, attrs) {
             var bemjsonNode = {},
-                classes = attrs.class && attrs.class.split(' ');
+                classes = attrs.class && attrs.class.split(/\s/);
 
             if (classes && classes.length) {
                 var entities = classes.map(function(cls, idx) {
@@ -141,17 +141,16 @@ var convert = function(html, opts) {
                 js = js.replace(/^return/, '');
                 js = vm.runInNewContext('(' + js + ')');
 
-                if (js[bemjsonNode.block]) {
-                    if (isEmpty(js[bemjsonNode.block])) {
-                        bemjsonNode.js = true;
-                    } else {
-                        bemjsonNode.js = js[bemjsonNode.block];
-                    }
+                var jsKey = naming.stringify(bemjsonNode);
+
+                if (js[jsKey]) {
+                    bemjsonNode.js = isEmpty(js[jsKey]) || js[jsKey];
                 }
-                delete js[bemjsonNode.block];
+
+                delete js[jsKey];
 
                 Object.keys(js).forEach(function(prop) {
-                    bemjsonNode.mix.forEach(function(entity, idx) {
+                    bemjsonNode.mix && bemjsonNode.mix.forEach(function(entity, idx) {
                         if (entity.block && entity.block == prop) {
                             if (isEmpty(js[prop])) {
                                 bemjsonNode.mix[idx].js = true;

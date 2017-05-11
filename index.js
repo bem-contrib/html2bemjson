@@ -47,10 +47,71 @@ var convert = function(html, opts) {
         },
         onopentag: function(tag, attrs) {
             var bemjsonNode = {},
-                classes = attrs.class && attrs.class.split(/\s/);
+                classes = attrs.class && attrs.class.split(/\s/),
+                visitedBlocksOnCurrentNode = [];
+
+            function onEntity(entity) {
+                if (typeof entity === 'string') {
+                    bemjsonNode.cls ? bemjsonNode.cls.push(entity) : bemjsonNode.cls = [entity];
+                    return;
+                }
+
+                var blockName = entity.block,
+                    modFieldName = entity.elem ? 'elemMods' : 'mods';
+
+                naming.isBlock(entity) && visitedBlocksOnCurrentNode.push(blockName);
+
+                if (naming.isBlockMod(entity) && visitedBlocksOnCurrentNode.indexOf(blockName) < 0) {
+                    onEntity({ block: blockName });
+                }
+
+                if (!bemjsonNode.block) {
+                    Object.keys(entity).forEach(function(key) {
+                        bemjsonNode[key] = entity[key];
+                    });
+
+                    return;
+                }
+
+                if (
+                    entity.block === bemjsonNode.block &&
+                    entity.elem === bemjsonNode.elem &&
+                    entity.modName
+                ) {
+                    bemjsonNode[modFieldName] || (bemjsonNode[modFieldName] = {});
+                    bemjsonNode[modFieldName][entity.modName] = entity.modVal;
+                } else { // build mixes
+                    if (entity.modName) {
+                        var mixes = bemjsonNode.mix,
+                            currentMixingItem;
+
+                        if (mixes) {
+                            for (var i = 0; i < bemjsonNode.mix.length; i++) {
+                                if ((mixes[i].block === entity.block) && mixes[i].elem === entity.elem) {
+                                    currentMixingItem = mixes[i];
+                                }
+                            }
+                        }
+
+                        if (currentMixingItem) {
+                            currentMixingItem[modFieldName] || (currentMixingItem[modFieldName] = {});
+                            currentMixingItem[modFieldName][entity.modName] = entity.modVal;
+
+                            return;
+                        } else {
+                            entity[modFieldName] = {};
+                            entity[modFieldName][entity.modName] = entity.modVal;
+                            delete entity.modName;
+                            delete entity.modVal;
+                        }
+                    }
+
+                    bemjsonNode.mix = (bemjsonNode.mix || []).concat(entity);
+                }
+            }
 
             if (classes && classes.length) {
-                var entities = classes.map(function(cls, idx) {
+                var entities = classes.map(function(cls) {
                         var entity = naming.parse(cls);
 
                         if (!entity && opts.preserveWrongClasses) {
@@ -58,66 +119,7 @@ var convert = function(html, opts) {
                         }
 
                         return entity;
-                    }),
-                    visitedBlocksOnCurrentNode = [];
-
-                function onEntity(entity) {
-                    if (typeof entity === 'string') {
-                        return bemjsonNode.cls ? bemjsonNode.cls.push(entity) : bemjsonNode.cls = [entity];
-                    }
-
-                    var blockName = entity.block,
-                        modFieldName = entity.elem ? 'elemMods' : 'mods';
-
-                    naming.isBlock(entity) && visitedBlocksOnCurrentNode.push(blockName);
-
-                    if (naming.isBlockMod(entity) && visitedBlocksOnCurrentNode.indexOf(blockName) < 0) {
-                        onEntity({ block: blockName });
-                    }
-
-                    if (!bemjsonNode.block) {
-                        for (var i in entity) {
-                            bemjsonNode[i] = entity[i];
-                        }
-                        return;
-                    }
-
-                    if (
-                        entity.block === bemjsonNode.block &&
-                        entity.elem === bemjsonNode.elem &&
-                        entity.modName
-                    ) {
-                        bemjsonNode[modFieldName] || (bemjsonNode[modFieldName] = {});
-                        bemjsonNode[modFieldName][entity.modName] = entity.modVal;
-                    } else { // build mixes
-                        if (entity.modName) {
-                            var mixes = bemjsonNode.mix,
-                                currentMixingItem;
-
-                            if (mixes) {
-                                for (var i = 0; i < bemjsonNode.mix.length; i++) {
-                                    if ((mixes[i].block === entity.block) && mixes[i].elem === entity.elem) {
-                                        currentMixingItem = mixes[i];
-                                    }
-                                }
-                            }
-
-                            if (currentMixingItem) {
-                                currentMixingItem[modFieldName] || (currentMixingItem[modFieldName] = {});
-                                currentMixingItem[modFieldName][entity.modName] = entity.modVal;
-
-                                return;
-                            } else {
-                                entity[modFieldName] = {};
-                                entity[modFieldName][entity.modName] = entity.modVal;
-                                delete entity.modName;
-                                delete entity.modVal;
-                            }
-                        }
-
-                        bemjsonNode.mix = (bemjsonNode.mix || []).concat(entity);
-                    }
-                }
+                    });
 
                 entities.forEach(onEntity);
 
@@ -179,7 +181,7 @@ var convert = function(html, opts) {
 
             bufArray.push(bemjsonNode);
         },
-        onclosetag: function(tag) {
+        onclosetag: function() {
             var bemjsonNode = bufArray.pop();
 
             ['content', 'mix'].forEach(function(field) {
@@ -236,7 +238,7 @@ function stringify(html, opts) {
     opts.indent || (opts.indent = '    ');
 
     return stringifyObj(convert(html, opts), opts);
-};
+}
 
 module.exports = {
     convert: convert,

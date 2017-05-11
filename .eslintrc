@@ -1,0 +1,11 @@
+parserOptions:
+  ecmaVersion: 5
+
+env:
+  browser: true
+  node: true
+
+rules:
+  curly: [error, multi-line]
+
+extends: pedant

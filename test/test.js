@@ -5,9 +5,9 @@ var inspect = require('util').inspect,
     glob = require('glob'),
     html2bemjson = require('..');
 
-glob('test/test*.html', function(err, testFiles) {
-    if (err) {
-        throw new Error(err);
+glob('test/test*.html', function(globErr, testFiles) {
+    if (globErr) {
+        throw globErr;
     }
 
     testFiles.forEach(function(testFile) {
@@ -32,7 +32,7 @@ glob('test/test*.html', function(err, testFiles) {
             console.log(err.message);
             console.log('\nconverted BEMJSON\n', html2bemjson.stringify(html, opts));
             console.log('\nreference\n', inspect(reference, { depth: null }));
-            throw new Error(err);
+            throw err;
         }
     });
 });

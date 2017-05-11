@@ -4,7 +4,11 @@
   "description": "HTML to BEMJSON convertor",
   "main": "index.js",
   "scripts": {
-    "test": "node test/test.js"
+    "lint": "eslint .",
+    "unit": "node test/test.js",
+    "test": "npm run unit && npm run lint",
+    "cover": "istanbul cover test/test.js",
+    "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls"
   },
   "repository": {
     "type": "git",
@@ -28,6 +32,10 @@
     "stringify-object": "^2.3.0"
   },
   "devDependencies": {
-    "glob": "^5.0.14"
+    "coveralls": "^2.13.1",
+    "eslint": "^3.19.0",
+    "eslint-config-pedant": "^0.9.0",
+    "glob": "^5.0.14",
+    "istanbul": "^0.4.5"
   }
 }
